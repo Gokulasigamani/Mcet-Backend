@@ -2,24 +2,30 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Ensure the uploads directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); 
+    cb(null, uploadDir); // Save files to the 'uploads' directory
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+    cb(null, Date.now() + path.extname(file.originalname)); // Append timestamp to filename
   },
 });
 
 const upload = multer({ storage: storage });
 
-
+// Login route (unchanged)
 app.post("/login", (req, res) => {
   const users = [
     { rollnumber: "727621bit031", password: "15042004" },
@@ -45,12 +51,14 @@ app.post("/login", (req, res) => {
   }
 });
 
+// Complaints route (handles file upload)
 app.post("/complaints", upload.single("attachment"), (req, res) => {
   const { complaint } = req.body;
   const attachment = req.file ? req.file.path : null;
 
   console.log("Complaint:", complaint);
   console.log("File:", attachment);
+
   res.status(200).json({ message: "Complaint received successfully" });
 });
 
