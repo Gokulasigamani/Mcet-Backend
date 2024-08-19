@@ -8,24 +8,25 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Ensure the uploads directory exists
-const uploadDir = path.join(__dirname, 'uploads');
+const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir); // Save files to the 'uploads' directory
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Append timestamp to filename
+    cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 
 const upload = multer({ storage: storage });
 
-// Login route (unchanged)
+// Simulating a database for users and complaints
+let complaints = [];
+
 app.post("/login", (req, res) => {
   const users = [
     { rollnumber: "727621bit031", password: "15042004" },
@@ -36,6 +37,7 @@ app.post("/login", (req, res) => {
     { rollnumber: "727621bec301", password: "25102003" },
     { rollnumber: "727621bec013", password: "23052004" },
     { rollnumber: "727621bit031", password: "23052004" },
+    { rollnumber: "mcetthead", password: "1234" }, // Admin credentials
   ];
 
   const { rollnumber, password } = req.body;
@@ -45,21 +47,34 @@ app.post("/login", (req, res) => {
   );
 
   if (user) {
-    res.status(200).json({ message: "Login successful" });
+    if (rollnumber === "mcetthead" && password === "1234") {
+      // Redirect to admin panel for admin user
+      res.status(200).json({ message: "Admin login successful", isAdmin: true });
+    } else {
+      res.status(200).json({ message: "Login successful", isAdmin: false });
+    }
   } else {
     res.status(400).json({ message: "Invalid roll number or password" });
   }
 });
 
-// Complaints route (handles file upload)
 app.post("/complaints", upload.single("attachment"), (req, res) => {
   const { complaint } = req.body;
   const attachment = req.file ? req.file.path : null;
 
-  console.log("Complaint:", complaint);
-  console.log("File:", attachment);
+  const newComplaint = {
+    id: complaints.length + 1,
+    complaint,
+    attachment,
+  };
+
+  complaints.push(newComplaint);
 
   res.status(200).json({ message: "Complaint received successfully" });
+});
+
+app.get("/admin/complaints", (req, res) => {
+  res.status(200).json({ complaints });
 });
 
 app.listen(3000, () => {
