@@ -73,6 +73,18 @@ app.post("/complaints", upload.single("attachment"), (req, res) => {
   res.status(200).json({ message: "Complaint received successfully" });
 });
 
+app.get("/complaints", (req, res) => {
+  // Example complaints
+  const complaints = [
+    { text: "Complaint 1", attachment: "/uploads/file1.pdf" },
+    { text: "Complaint 2", attachment: "/uploads/file2.pdf" },
+    // Add more complaints
+  ];
+
+  res.status(200).json(complaints);
+});
+
+
 app.get("/admin/complaints", (req, res) => {
   res.status(200).json({ complaints });
 });
